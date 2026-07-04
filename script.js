@@ -75,6 +75,8 @@ function getFilteredProducts(cat, sub) {
 function renderProducts(cat = 'todos', sub = null) {
   const grid = document.getElementById('productsGrid');
   const title = document.getElementById('sectionTitle');
+  const avisoExistente = document.getElementById('encomendaAvisoGeral');
+  if (avisoExistente) avisoExistente.remove();
   let list = getFilteredProducts(cat, sub);
 
   // For "todos" show all in-stock + encomenda at end
@@ -83,8 +85,18 @@ function renderProducts(cat = 'todos', sub = null) {
    
    
     title.textContent = 'Todos os Produtos';
-  } else if (cat === 'encomenda') {
+} else if (cat === 'encomenda') {
     title.textContent = 'Sob Encomenda';
+    setTimeout(() => {
+      const bar = document.querySelector('.section-title-bar');
+      if (bar && !document.getElementById('encomendaAvisoGeral')) {
+        const aviso = document.createElement('p');
+        aviso.id = 'encomendaAvisoGeral';
+        aviso.className = 'encomenda-aviso-geral';
+        aviso.textContent = 'Os itens desta categoria serão verificados com o fornecedor antes da confirmação. O prazo de retorno é de até 7 dias, e a disponibilidade não é garantida.';
+        bar.after(aviso);
+      }
+    }, 0);
   } else if (cat === 'feminino' && sub) {
     title.textContent = subLabels[sub] || 'Feminino';
   } else if (cat === 'feminino') {
@@ -130,9 +142,8 @@ const imgs = g.variants.flatMap((v, i) => {
   <p class="card-color-label">${first.color}</p>
   ${!isEncomenda ? `<div class="card-sizes">${first.sizes.map(s => '<span class="size-tag">'+s+'</span>').join('')}</div>` : ''}
         ${isEncomenda ? `
+
   <div class="encomenda-form">
-    <p class="encomenda-aviso">⚠️ Este item será verificado com o fornecedor. Em até 7 dias retornaremos. Não garantimos disponibilidade.</p>
-    
     <input type="text" class="encomenda-cor" placeholder="Cor desejada" />
     <input type="text" class="encomenda-cor-nao" placeholder="Cor que NÃO deseja" />
     <input type="text" class="encomenda-tamanho" placeholder="Tamanho desejado (ex: M/M)" />
@@ -222,7 +233,6 @@ card.querySelector('.card-img-wrap').addEventListener('touchend', e => {
 
 }
 
-// ── MODAL TAMANHO ────────────────────────────────
 async function openSizeModal(id) {
   const p = products.find(x => x.id === id);
   const { data: estoqueData } = await supabaseClient
@@ -234,6 +244,32 @@ async function openSizeModal(id) {
   currentQty = 1;
   selectedSize = null;
 
+  // Cores candidatas: mesmo nome do produto e marcadas como disponíveis
+  const candidatas = products.filter(x => x.name === p.name && x.inStock);
+
+  // Busca o estoque de TODAS as candidatas de uma vez só
+  const idsCandidatas = candidatas.map(v => v.id);
+  const { data: estoqueTodasCores } = await supabaseClient
+    .from('estoque')
+    .select('*')
+    .in('produto_id', idsCandidatas);
+
+  // Só entra na lista de cores quem tem pelo menos 1 unidade em algum tamanho
+  const irmaos = candidatas.filter(v => {
+    const itensDoProduto = (estoqueTodasCores || []).filter(e => e.produto_id === v.id);
+    const totalUnidades = itensDoProduto.reduce((acc, e) => acc + (e.quantidade || 0), 0);
+    return totalUnidades > 0;
+  });
+
+  const colorOpts = document.getElementById('colorOptions');
+  colorOpts.innerHTML = irmaos.map(v => `
+    <button class="color-opt ${v.id === p.id ? 'selected' : ''}" data-id="${v.id}">${v.color}</button>
+  `).join('');
+  colorOpts.querySelectorAll('.color-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openSizeModal(parseInt(btn.dataset.id));
+    });
+  });
   document.getElementById('modalImg').src = p.imgF;
   document.getElementById('modalImg').alt = p.name;
   document.getElementById('modalName').textContent = `${p.name} — ${p.color}`;
@@ -241,17 +277,19 @@ async function openSizeModal(id) {
   document.getElementById('qtyValue').textContent = 1;
 
   const opts = document.getElementById('sizeOptions');
- opts.innerHTML = p.sizes.map(s => {
+opts.innerHTML = p.sizes.map(s => {
   const estoqueItem = estoqueData ? estoqueData.find(e => e.tamanho === s) : null;
   const qtd = estoqueItem ? estoqueItem.quantidade : 0;
-  return `<button class="size-opt" data-size="${s}">${s} <span class="size-stock">(${qtd} un.)</span></button>`;
+  const semEstoque = qtd <= 0;
+  return `<button class="size-opt ${semEstoque ? 'disabled' : ''}" data-size="${s}" ${semEstoque ? 'disabled' : ''}>${s} <span class="size-stock">(${qtd} un.)</span></button>`;
 }).join('');
 
-  opts.querySelectorAll('.size-opt').forEach(btn => {
+  opts.querySelectorAll('.size-opt:not(.disabled)').forEach(btn => {
     btn.addEventListener('click', () => {
       opts.querySelectorAll('.size-opt').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       selectedSize = btn.dataset.size;
+
       supabaseClient
   .from('estoque')
   .select('quantidade')
@@ -404,6 +442,12 @@ document.getElementById('btnCheckout').addEventListener('click', () => {
   document.getElementById('deliveryAddressBox').style.display = 'none';
   document.getElementById('deliveryAddress').value = '';
   document.getElementById('checkoutError').style.display = 'none';
+
+  // Mostra o aviso de encomenda só se tiver item de encomenda no carrinho
+  const temEncomenda = cart.some(i => i.encomenda);
+  document.getElementById('checkoutEncomendaSection').style.display = temEncomenda ? 'flex' : 'none';
+  document.getElementById('checkoutEncomendaConfirm').checked = false;
+
   document.getElementById('checkoutModalOverlay').classList.add('open');
 });
 
@@ -444,6 +488,13 @@ document.getElementById('btnSendWhatsapp').addEventListener('click', () => {
 
   if (!payment) { showError('Por favor, selecione a forma de pagamento.'); return; }
   if (!delivery) { showError('Por favor, selecione retirada ou entrega.'); return; }
+
+  const temEncomenda = cart.some(i => i.encomenda);
+  const confirmouEncomenda = document.getElementById('checkoutEncomendaConfirm').checked;
+  if (temEncomenda && !confirmouEncomenda) {
+    showError('Por favor, confirme que está ciente das condições do item sob encomenda.');
+    return;
+  }
 
   let address = '';
   if (delivery.value === 'Entrega') {
