@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Administrativo — Essência</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- TELA DE LOGIN -->
+  <section id="telaLogin" class="tela-login">
+    <form id="formLogin" class="card-login">
+      <div class="logo-admin">
+        <span class="logo-main">Essência</span>
+        <span class="logo-sub">Painel Administrativo</span>
+      </div>
+      <label>
+        E-mail
+        <input type="email" id="loginEmail" required autocomplete="username" />
+      </label>
+      <label>
+        Senha
+        <input type="password" id="loginSenha" required autocomplete="current-password" />
+      </label>
+      <button type="submit" class="btn-primario">Entrar</button>
+      <p id="loginErro" class="erro"></p>
+    </form>
+  </section>
+
+  <!-- PAINEL PRINCIPAL -->
+  <section id="telaPainel" class="tela-painel oculto">
+    <header class="topo-painel">
+      <div class="logo-admin logo-admin-topo">
+        <span class="logo-main">Essência</span>
+        <span class="logo-sub">Painel Administrativo</span>
+      </div>
+      <button id="btnSair" class="btn-secundario"><i class="fas fa-right-from-bracket"></i> Sair</button>
+    </header>
+
+    <main class="conteudo-painel">
+      <div class="acoes-topo">
+        <div>
+          <h2>Produtos</h2>
+          <p id="resumoProdutos" class="resumo-produtos"></p>
+        </div>
+        <button id="btnNovoProduto" class="btn-primario"><i class="fas fa-plus"></i> Novo produto</button>
+      </div>
+
+      <div class="filtros">
+        <input type="text" id="filtroBusca" placeholder="Buscar por nome..." />
+        <select id="filtroCategoria">
+          <option value="">Todas categorias</option>
+          <option value="feminino">Feminino</option>
+          <option value="masculino">Masculino</option>
+        </select>
+        <select id="filtroEstoque">
+          <option value="">Todos</option>
+          <option value="disponivel">Disponível</option>
+          <option value="encomenda">Sob encomenda</option>
+        </select>
+      </div>
+
+      <div class="tabela-wrap">
+        <table class="tabela-produtos">
+          <thead>
+            <tr>
+              <th>Foto</th>
+              <th>Nome</th>
+              <th>Cor</th>
+              <th>Categoria</th>
+              <th>Preço</th>
+              <th>Estoque</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabela">
+            <tr><td colspan="8">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </section>
+
+  <!-- MODAL PRODUTO -->
+  <div id="modalProduto" class="modal-overlay oculto">
+    <div class="modal">
+      <button class="modal-close" id="btnFecharModal"><i class="fas fa-xmark"></i></button>
+      <h2 id="modalTitulo">Novo produto</h2>
+
+      <form id="formProduto">
+        <input type="hidden" id="produtoId" />
+
+        <div class="linha">
+          <label>
+            Nome do produto
+            <input type="text" id="produtoNome" required placeholder="Ex: Sutiã Sophie" />
+          </label>
+          <label>
+            Cor
+            <input type="text" id="produtoCor" required placeholder="Ex: Vermelho" />
+          </label>
+        </div>
+
+        <div class="linha">
+          <label>
+            Categoria
+            <select id="produtoCategoria" required>
+              <option value="feminino">Feminino</option>
+              <option value="masculino">Masculino</option>
+            </select>
+          </label>
+          <label>
+            Subcategoria
+            <select id="produtoSub">
+              <option value="">—</option>
+              <option value="sutias">Sutiãs</option>
+              <option value="calcinhas">Calcinhas</option>
+              <option value="conjuntos">Conjuntos</option>
+              <option value="fitness">Moda Fitness</option>
+              <option value="diaadia">Moda do Dia a Dia</option>
+              <option value="cuecas">Cuecas</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="linha">
+          <label>
+            Preço (R$)
+            <input type="number" id="produtoPreco" step="0.01" min="0" required />
+          </label>
+          <label>
+            Estoque (quantidade)
+            <input type="number" id="produtoEstoque" min="0" required />
+          </label>
+        </div>
+
+       <label>Tamanhos e quantidades</label>
+<div id="tamanhosList">
+  <div class="tamanho-linha">
+    <input type="text" placeholder="Tamanho (ex: P/S)" class="tamanho-nome" />
+    <input type="number" placeholder="Qtd" min="0" class="tamanho-qtd" />
+    <button type="button" class="btn-remover-tamanho">✕</button>
+  </div>
+</div>
+<button type="button" id="btnAdicionarTamanho" class="btn-secundario">+ Adicionar tamanho</button>
+        <label class="linha-checkbox">
+          <input type="checkbox" id="produtoDisponivel" checked />
+          Produto disponível agora (desmarque para "Sob Encomenda")
+        </label>
+
+        <div class="linha">
+          <label>
+            Foto principal
+            <input type="file" id="produtoImgF" accept="image/png, image/jpeg, image/webp" />
+            <img id="previewImgF" class="preview-img oculto" />
+          </label>
+          <label>
+            Foto alternativa (opcional)
+            <input type="file" id="produtoImgT" accept="image/png, image/jpeg, image/webp" />
+            <img id="previewImgT" class="preview-img oculto" />
+          </label>
+        </div>
+
+        <p id="produtoErro" class="erro"></p>
+
+        <div class="acoes-modal">
+          <button type="button" id="btnCancelarModal" class="btn-secundario">Cancelar</button>
+          <button type="submit" class="btn-primario" id="btnSalvarProduto">Salvar produto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
