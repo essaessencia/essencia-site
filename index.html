@@ -86,6 +86,8 @@
       <img id="modalImg" src="" alt="" class="modal-img" />
       <h3 id="modalName" class="modal-name"></h3>
       <p id="modalPrice" class="modal-price"></p>
+      <p class="modal-label">Cor:</p>
+      <div class="color-options" id="colorOptions"></div>
       <p class="modal-label">Escolha o tamanho:</p>
       <div class="size-options" id="sizeOptions"></div>
       <div class="modal-qty">
@@ -131,6 +133,17 @@
       <div id="deliveryAddressBox" class="delivery-address-box" style="display:none">
         <label class="checkout-label" for="deliveryAddress">Seu endereço de entrega <span class="required">*</span></label>
         <textarea id="deliveryAddress" class="address-input" placeholder="Rua, número, bairro, complemento, cidade..." rows="3"></textarea>
+      </div>
+
+    <div id="checkoutEncomendaSection" class="checkout-encomenda-aviso" style="display:none">
+        <i class="fas fa-circle-info"></i>
+        <div>
+          <p>Seu pedido contém item(ns) sob encomenda. Eles serão verificados com o fornecedor antes da confirmação. O prazo de retorno é de até 7 dias, e a disponibilidade não é garantida.</p>
+          <label class="checkout-confirm-label">
+            <input type="checkbox" id="checkoutEncomendaConfirm" />
+            Li e estou ciente das condições acima
+          </label>
+        </div>
       </div>
 
       <div id="checkoutError" class="checkout-error" style="display:none"></div>
