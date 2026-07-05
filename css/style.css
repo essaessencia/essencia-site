@@ -51,22 +51,20 @@ body {
 .logo { display: flex; flex-direction: column; line-height: 1; margin: 0 auto;}
 
 .logo-main {
-  font-family: var(--font-display);
+  font-family: 'Playfair Display', serif;
   font-size: 1.9rem;
   font-weight: 600;
   color: var(--branco);
   letter-spacing: 0.04em;
 }
-
 .logo-sub {
   font-size: 0.65rem;
   font-weight: 300;
   color: var(--bege);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  margin-top: 1px;
+  margin-top: 4px;
 }
-
 .cart-btn {
   position: relative;
   background: none;
