@@ -141,14 +141,29 @@ const imgs = g.variants.flatMap((v, i) => {
   <p class="card-price">${fmt(first.price)}</p>
   <p class="card-color-label">${first.color}</p>
   ${!isEncomenda ? `<div class="card-sizes">${first.sizes.map(s => '<span class="size-tag">'+s+'</span>').join('')}</div>` : ''}
-        ${isEncomenda ? `
-
+       ${isEncomenda ? `
   <div class="encomenda-form">
-    <input type="text" class="encomenda-cor" placeholder="Cor desejada" />
-    <input type="text" class="encomenda-cor-nao" placeholder="Cor que NÃO deseja" />
-    <input type="text" class="encomenda-tamanho" placeholder="Tamanho desejado (ex: M/M)" />
-    <input type="number" class="encomenda-qty" min="1" value="1" placeholder="Quantidade" />
-    <button class="btn-encomenda" data-id="${first.id}" data-name="${first.name}">Consultar Encomenda</button>
+    <div class="encomenda-row">
+      <div class="encomenda-field">
+        <label>Cor desejada</label>
+        <input type="text" class="encomenda-cor" />
+      </div>
+      <div class="encomenda-field">
+        <label>Cor indesejada</label>
+        <input type="text" class="encomenda-cor-nao" />
+      </div>
+    </div>
+    <div class="encomenda-row">
+      <div class="encomenda-field">
+        <label>Tamanho</label>
+        <input type="text" class="encomenda-tamanho" placeholder="ex: M/M" />
+      </div>
+      <div class="encomenda-field encomenda-field-qty">
+        <label>Quantidade</label>
+        <input type="number" class="encomenda-qty" min="1" value="1" />
+      </div>
+    </div>
+   <button class="btn-encomenda" data-id="${first.id}" data-name="${first.name}">Consultar disponibilidade <i class="fas fa-arrow-right"></i></button>
   </div>
 ` : `<button class="btn-add" data-id="${first.id}">Adicionar ao Carrinho</button>`}
         </div>
@@ -164,19 +179,20 @@ const imgs = g.variants.flatMap((v, i) => {
       openSizeModal(parseInt(btn.dataset.id));
     });
   });
- grid.querySelectorAll('.btn-encomenda').forEach(btn => {
+grid.querySelectorAll('.btn-encomenda').forEach(btn => {
   btn.addEventListener('click', e => {
     e.stopPropagation();
     const card = btn.closest('.product-card');
     const tamanho = card.querySelector('.encomenda-tamanho').value.trim();
     const cor = card.querySelector('.encomenda-cor').value.trim();
     const corNao = card.querySelector('.encomenda-cor-nao').value.trim();
+    const qty = parseInt(card.querySelector('.encomenda-qty').value) || 1;
     if (!tamanho || !cor) {
       alert('Por favor, preencha o tamanho e a cor desejada.');
       return;
     }
     const p = products.find(x => x.id === parseInt(btn.dataset.id));
-    addToCart(p, tamanho, 1, { cor, corNao });
+    addToCart(p, tamanho, qty, { cor, corNao });
   });
 });
   grid.querySelectorAll('.product-card').forEach(card => {
@@ -399,16 +415,15 @@ function addToCart(product, size, qty, encomenda = null) {
   document.getElementById('cartTotal').textContent = fmt(total);
 
   // eventos
-  itemsEl.querySelectorAll('.qty-sm').forEach(btn => {
+itemsEl.querySelectorAll('.qty-sm').forEach(btn => {
     btn.addEventListener('click', () => {
       const item = cart.find(i => i.key === btn.dataset.key);
       if (!item) return;
       if (btn.dataset.action === 'minus') { item.qty = Math.max(1, item.qty - 1); }
-      else if (item.qty < item.product.stock) { item.qty++;}
+      else if (item.encomenda || item.qty < item.product.stock) { item.qty++; }
       updateCart();
     });
   });
-
   itemsEl.querySelectorAll('.btn-remove-item').forEach(btn => {
     btn.addEventListener('click', () => {
       cart = cart.filter(i => i.key !== btn.dataset.key);
@@ -531,7 +546,7 @@ if (delivery.value === 'Retirada') {
 if (itensEncomenda.length > 0) {
   msg += `\n\n📋 *Itens sob Encomenda:*\n`;
   itensEncomenda.forEach(i => {
-    msg += `  • ${i.product.name} — Tam: ${i.size} | Cor: ${i.encomenda.cor}`;
+    msg += `  • ${i.product.name} — Tam: ${i.size} | Qtd: ${i.qty} | Cor: ${i.encomenda.cor}`;
     if (i.encomenda.corNao) msg += ` | Cor indesejada: ${i.encomenda.corNao}`;
     msg += '\n';
   });
